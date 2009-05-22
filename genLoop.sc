@@ -125,7 +125,7 @@ GenLoop {
 		var slider;
 		var onsetMeterText, onsetText, inMeterText;
 		
-		win = SCWindow.new("GenLoop", Rect((SCWindow.screenBounds.width/2)-200, (SCWindow.screenBounds.height/2), 400, 400));
+		win = Window.new("GenLoop", Rect((SCWindow.screenBounds.width/2)-200, (Window.screenBounds.height/2), 400, 400));
 		winW = win.bounds.width;
 		winH = win.bounds.height;
 		recBut = GUI.button.new(win, Rect(62.5, 25, 75, 75));
@@ -210,8 +210,8 @@ GenLoop {
 	}
 	
 	setMixerGUI {
-		guiMixerRect = Rect((SCWindow.screenBounds.width/2)-200, (SCWindow.screenBounds.height/2)-400, 20, guiMixerHeight);
-		guiMixer = SCWindow.new("GCMix", guiMixerRect);
+		guiMixerRect = Rect((Window.screenBounds.width/2)-200, (Window.screenBounds.height/2)-400, 20, guiMixerHeight);
+		guiMixer = Window.new("GCMix", guiMixerRect);
 		guiMixer.userCanClose_(false);
 		guiMixerNextX = 0;
 		guiMixer.front;
@@ -223,7 +223,7 @@ GenLoop {
 		{
 			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
 
-			mute=SCButton(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
+			mute=Button(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
 			mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
 
 			amp=EZSlider(guiMixer, Rect(guiMixerNextX+25,0,25,260), "Vol", \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
@@ -262,7 +262,7 @@ GenLoop {
 			guiMixerPans.add(pan);
 
 			channelRoutines.add(this.setChannelAutomation(index));
-			automate = SCButton(guiMixer, Rect(guiMixerNextX, 280, 75, 20));
+			automate = Button(guiMixer, Rect(guiMixerNextX, 280, 75, 20));
 			automate.states_([["Manual", Color.white, Color.grey],["Automated", Color.white, Color.red]]);
 			
 			automate.action_(
@@ -275,7 +275,7 @@ GenLoop {
 				}}
 			);
 
-			cutOrLoop = SCButton(guiMixer, Rect(guiMixerNextX, 300, 75, 20));
+			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 300, 75, 20));
 			cutOrLoop.states_([["Looping", Color.black, Color.white],["Cutting", Color.white, Color.black]]);
 			cutOrLoop.action_(
 				Routine { inf.do {
