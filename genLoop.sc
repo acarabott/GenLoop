@@ -49,6 +49,8 @@ GenLoop {
 	var <guiMixerPans;		//The pan values of channels
 	var <channelRoutines;	//The routines for each channel
 	var <channelProbs;		//The trigger probabilities for each channel
+	var <channelLoopAmps;	//The amplitudes for each channels looping synth
+	var <channelCutAmps;		//The amplitudes for each channels cutting synth
 	
 	var <>cropFrame;		//Frame to crop at
 	var <>tempo;			//Tempo
@@ -99,6 +101,8 @@ GenLoop {
 		nowAnalysing = false;
 		cuttingList = List[];
 		channelProbs = List[];
+		channelLoopAmps = List[];
+		channelCutAmps = List[];
 		
 		beatCounter = 0;
 		totalRecBeats = 0;
@@ -231,7 +235,12 @@ GenLoop {
 			amp.sliderView.focusColor_(Color.clear); 
 			amp.font_(Font("Helvetica",10));
 
-			amp.action_({|ez| loopSynths[index].set(\amp, ez.value.dbamp)});
+			amp.action_({|ez| 
+				var val = ez.value.dbamp;
+				channelLoopAmps[index] = val;
+				channelCutAmps[index] = val; 
+				this.setChannelAmp(index, val);
+			});
 			guiMixerAmps.add(amp);
 			
 			prob=EZSlider(guiMixer, Rect(guiMixerNextX+50,0,25,260), "Prob", initVal:0.25, unitWidth:25, numberWidth:25,layout:\vert);
@@ -369,7 +378,7 @@ GenLoop {
 			// measure rms and Peak
 			SendReply.kr(imp, '/tr', [Amplitude.kr(inSig), K2A.ar(Peak.ar(inSig, delimp).lag(0, 3))], 0);
 		
-			Out.ar(0, inSig*env)
+			Out.ar(0, (inSig*env).dup)
 		}.send(s);
 		
 		//Loop and Onset detection SynthDef
@@ -423,7 +432,7 @@ GenLoop {
 		}.send(s);
 				
 		//Loop for playing back a specific portion of a buffer
-		SynthDef(\GCHit) { |bufnum, startFrame, endFrame, rate=1|
+		SynthDef(\GCHit) { |bufnum, startFrame, endFrame, rate=1, amp=1|
 			var sig;
 			var phase;
 			var dur;
@@ -434,7 +443,7 @@ GenLoop {
 			sig = BufRd.ar(1, bufnum, phase, 0);
 			env = EnvGen.ar(Env.new([0,1,1,0], [0.02, dur-0.05, 0.03 ]), doneAction:2);
 			
-			Out.ar(0, Pan2.ar(sig*env, 0));
+			Out.ar(0, Pan2.ar((sig*env)*amp, 0));
 		}.send(s);
 		
 		SynthDef(\onBus) { |outBus|
@@ -611,7 +620,10 @@ GenLoop {
 		"recording".postln;					//Change these for GUI stuff
 		this.newGUIChannel(loopSynths.size-1);
 		nowRecording = true;
-
+		
+		//Add a default amplitude
+		channelLoopAmps.add(1);
+		channelCutAmps.add(1);
 	}
 	
 	stopRecordingAction {
@@ -638,6 +650,7 @@ GenLoop {
 		this.cropAndErase(startRecBeat, totalRecBeats);
 
 	}
+	
 	//Method to crop a recording to the nearest beat and erase the recording buffer
 	cropAndErase {|startBeat, totalBeats|
 		var fakeEndVal;
@@ -684,7 +697,7 @@ GenLoop {
 		//set analysis synth buffer to duffBuf
 		this.stopOnsetSynth;
 		//Turn up loop volume
-		loopSynths[index].set(\amp, 1);
+		loopSynths[index].set(\amp, channelLoopAmps[index]);
 		//Turn off cutting
 		cuttingList[index] = false;
 		
@@ -734,14 +747,14 @@ GenLoop {
 		recBuf.plot;
 	}
 	
-	hitFunc {|bufnum, startFrame, endFrame, rate=1|
+	hitFunc {|bufnum, startFrame, endFrame, rate=1, amp|
 		
 		s.makeBundle(nil, {			
-			Synth(\GCHit, [\bufnum, bufnum, \startFrame, startFrame, \endFrame, endFrame, \rate, rate]);							
+			Synth(\GCHit, [\bufnum, bufnum, \startFrame, startFrame, \endFrame, endFrame, \rate, rate, \amp, amp]);							
 		});
 	}
 	
-	randomHitFunc {|chance=1, bufnum, hitList|
+	randomHitFunc {|chance=1, bufnum, hitList, amp|
 		var hit;
 		var startFrame, endFrame;
 		var rate;
@@ -759,7 +772,7 @@ GenLoop {
 			};
 			rate = [-1,0.5,1,2].wchoose([0.15,0.1,0.6,0.15]);
 
-			this.hitFunc(bufnum, startFrame, endFrame, rate)			
+			this.hitFunc(bufnum, startFrame, endFrame, rate, amp)			
 		};
 	
 	}
@@ -767,7 +780,7 @@ GenLoop {
 	allHitFuncs {|index|
 		cuttingList.size.do { |i|
 			if(cuttingList[i]) {
-				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i])
+				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i], channelCutAmps[index])
 			};
 		};
 	}
@@ -788,6 +801,12 @@ GenLoop {
 			};
 		};
 		^rout;
+	}
+	
+	setChannelAmp{|index, val|
+		if(cuttingList[index].not) {
+			loopSynths[index].set(\amp, val);
+		};
 	}
 	
 	cleanUp {
