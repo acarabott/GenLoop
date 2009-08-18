@@ -129,7 +129,7 @@ GenLoop {
 		var slider;
 		var onsetMeterText, onsetText, inMeterText;
 		
-		win = Window.new("GenLoop", Rect((SCWindow.screenBounds.width/2)-200, (Window.screenBounds.height/2), 400, 400));
+		win = Window.new("GenLoop", Rect((Window.screenBounds.width/2)-200, (Window.screenBounds.height/2), 400, 400));
 		winW = win.bounds.width;
 		winH = win.bounds.height;
 		recBut = GUI.button.new(win, Rect(62.5, 25, 75, 75));
@@ -184,7 +184,7 @@ GenLoop {
 						
 						layout: \line2
 			);
-		
+
 		inMeter = SCLevelIndicator(win, Rect((winW/10), winH/2, 30, 160));
 		inMeter.style = 2;
 		inMeter.numSteps = 10;
@@ -327,7 +327,7 @@ GenLoop {
 			beatOneSTrig = SendTrig.kr(A2K.kr(beatOneTrig), 1, timeSig);
 			crotchetSTrig = SendTrig.kr(A2K.kr(crotchetTrig), 2, 1);
 			quaverSTrig = SendTrig.kr(A2K.kr(quaverTrig), 3, 1);
-			semiquaverSTrig = SendTrig.kr(A2K.kr(quaverTrig), 3, 1);
+			semiquaverSTrig = SendTrig.kr(A2K.kr(semiquaverTrig), 5, 1);
 			
 			//Output clock data
 			Out.ar(outClock, phase);
@@ -347,7 +347,7 @@ GenLoop {
 		}.send(s);
 		
 		//Recording SynthDef
-		SynthDef(\GCRec) { |sigIn=1, clockIn, bufnum, trigger, stopRec=0, oneBeat|
+		SynthDef(\GCRec) { |sigIn=0, clockIn, bufnum, trigger, stopRec=0, oneBeat|
 			var inSig;
 			var clock;
 			var phase;
@@ -532,6 +532,7 @@ GenLoop {
 	
 	beatOneOSCAction {
 		this.allHitFuncs(0);
+		0.postln;
 	}
 	
 	crotchetOSCAction {	
@@ -545,14 +546,20 @@ GenLoop {
 		this.doneCroppingFunc;
 		
 		this.allHitFuncs(1);
+		
+		1.postln;
 	}
 	
 	quaverOSCAction {		
 		this.allHitFuncs(2);
+		
+		2.postln;
 	}
 	
 	semiquaverOSCAction {
-		this.allHitsFuncs(3)
+		this.allHitFuncs(3);
+		
+		3.postln;
 	}
 	
 	adjustCounters {
