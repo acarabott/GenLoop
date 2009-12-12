@@ -185,21 +185,21 @@ GenLoop {
 						layout: \line2
 			);
 
-		inMeter = SCLevelIndicator(win, Rect((winW/10), winH/2, 30, 160));
+/*		inMeter = SCLevelIndicator(win, Rect((winW/10), winH/2, 30, 160));
 		inMeter.style = 2;
 		inMeter.numSteps = 10;
 		inMeter.numTicks = 11;
 		inMeter.numMajorTicks = 3;
 		inMeterText = StaticText(win, Rect((winW/10), winH/2+160, 20, 20));	
 		inMeterText.string = "In";
-		
+*/		
 		onsetText = StaticText(win, Rect((winW/10)*9, winH/2+160, 20, 20));
 		onsetText.string = "OD";
-		onsetLED = SCLevelIndicator(win, Rect((winW/10)*9, winH/2-40, 20, 20));
+/*		onsetLED = SCLevelIndicator(win, Rect((winW/10)*9, winH/2-40, 20, 20));
 		onsetLED.style = 2;
 		onsetLED.numSteps = 1;
-		
-		onsetMeter = SCLevelIndicator(win, Rect((winW/5)*4, winH/2, 30, 160));
+*/		
+/*		onsetMeter = SCLevelIndicator(win, Rect((winW/5)*4, winH/2, 30, 160));
 		onsetMeter.style = 2;
 		onsetMeter.numSteps = 10;
 		onsetMeter.numTicks = 11;
@@ -207,7 +207,7 @@ GenLoop {
 		
 		onsetMeterText = StaticText(win, Rect((winW/5)*4, winH/2+160, 20, 20));
 		onsetMeterText.string = "VU";
-		
+*/		
 		win.front;
 		win.onClose = {	this.cleanUp };
 		
@@ -225,7 +225,7 @@ GenLoop {
 	var chan, lvl, mute, amp, prob, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
 		
 		{
-			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
+/*			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));*/
 
 			mute=Button(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
 			mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
@@ -378,7 +378,7 @@ GenLoop {
 			// measure rms and Peak
 			SendReply.kr(imp, '/tr', [Amplitude.kr(inSig), K2A.ar(Peak.ar(inSig, delimp).lag(0, 3))], 0);
 		
-/*			Out.ar(0, (inSig*env).dup)*/
+			Out.ar(0, (inSig*env).dup)
 		}.send(s);
 		
 		//Loop and Onset detection SynthDef
@@ -493,8 +493,8 @@ GenLoop {
 		switch (msg[2]) 
 			{0}	{
 					{
-						inMeter.value = msg[3].ampdb.linlin(-40, 0, 0, 1);
-						inMeter.peakLevel = msg[4].ampdb.linlin(-40, 0, 0, 1);
+/*						inMeter.value = msg[3].ampdb.linlin(-40, 0, 0, 1);*/
+/*						inMeter.peakLevel = msg[4].ampdb.linlin(-40, 0, 0, 1);*/
 					}.defer
 				}
 			{1}	{ this.beatOneOSCAction }
@@ -508,31 +508,33 @@ GenLoop {
 			{5}	{ this.semiquaverOSCAction }
 			{6}	{
 					{
-						onsetMeter.value = msg[3].ampdb.linlin(-40, 0, 0, 1);
-						onsetMeter.peakLevel = msg[4].ampdb.linlin(-40, 0, 0, 1);
+/*						onsetMeter.value = msg[3].ampdb.linlin(-40, 0, 0, 1);*/
+/*						onsetMeter.peakLevel = msg[4].ampdb.linlin(-40, 0, 0, 1);*/
 					}.defer
 				}
 			{7}	{
-					{
-						{onsetLED.value = msg[3]/msg[3]}.defer;
-						0.1.wait;
-						{onsetLED.value = 0}.defer ;
+/*					{
+						{
+							onsetLED.value = msg[3]/msg[3]}.defer;
+							0.1.wait;
+						{
+							onsetLED.value = 0
+						}.defer ;
 					}.fork
-				};
+*/				};
 			
 		}).add;
 		
-		mixoscr = OSCresponder(s.addr, '/mix', {|time, responder, msg|
+/*		mixoscr = OSCresponder(s.addr, '/mix', {|time, responder, msg|
 			{
 				guiMixerMeters[msg[2]].value = msg[3].ampdb.linlin(-40, 0, 0, 1);
 				guiMixerMeters[msg[2]].peakLevel = msg[4].ampdb.linlin(-40, 0, 0, 1);
 			}.defer
 		}).add;
-	}
+*/	}
 	
 	beatOneOSCAction {
 		this.allHitFuncs(0);
-		0.postln;
 	}
 	
 	crotchetOSCAction {	
@@ -547,19 +549,16 @@ GenLoop {
 		
 		this.allHitFuncs(1);
 		
-		1.postln;
 	}
 	
 	quaverOSCAction {		
 		this.allHitFuncs(2);
 		
-		2.postln;
 	}
 	
 	semiquaverOSCAction {
 		this.allHitFuncs(3);
 		
-		3.postln;
 	}
 	
 	adjustCounters {

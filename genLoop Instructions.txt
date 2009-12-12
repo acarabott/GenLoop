@@ -1,4 +1,4 @@
-1.	go to http://supercollider.sourceforge.org or google supercollider and find the sourcefourge page.
+ 1.	go to http://supercollider.sourceforge.org or google supercollider and find the sourcefourge page.
 
 2. Download SuperCollider for windows, follow installation instructions.
 
