@@ -8,7 +8,7 @@
 
 Platform.userExtensionDir;
 
-5. select that text, then press 'Lang' menu and select 'Evaluate' or press alt + enter ( I think)
+5. select that text, then press 'Lang' menu and select 'Evaluate' or press enter
 
 6. put genLoop.sc into the folder that it prints out.
 
@@ -16,7 +16,7 @@ Platform.userExtensionDir;
 
 s.waitForBoot({x = GenLoop.new(120, 4, 40)}); 
 
-and Evaluate or alt + Enter it.
+and Evaluate or 'enter' it.
 
 This will create a looper at 120bpm, 4/4, with 40 seconds of recording time. You can change these numbers.
 
