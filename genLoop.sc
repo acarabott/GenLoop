@@ -1,4 +1,3 @@
-
 GenLoop {
 
 	var <>s;				//Server
@@ -206,8 +205,8 @@ GenLoop {
 		onsetMeterText = StaticText(win, Rect((winW/5)*4, winH/2+160, 20, 20));
 		onsetMeterText.string = "VU";
 		
-		// FIXME This should account for any number of channels
-		inputPopup = EZPopUpMenu.new(win,Rect((winW/2)-20,(winH/2)-20,40,42), " Input",layout:\vert);
+		// FIXME This should read the no. of available channels
+		inputPopup = EZPopUpMenu.new(win,Rect((winW/10)-10,(winH/2)-55,40,40), " Input",layout:\vert);
 		50.do { |i|
 			inputPopup.addItem((i+1).asSymbol, {this.setInput(i)});
 		};		
