@@ -124,6 +124,7 @@ GenLoop {
 		var recBut, analyseBut, loopBut, metroBut;
 		var slider;
 		var onsetMeterText, onsetText, inMeterText;
+		var inputPopup;
 		
 		win = Window.new("GenLoop", Rect((SCWindow.screenBounds.width/2)-200, (Window.screenBounds.height/2), 400, 400));
 		winW = win.bounds.width;
@@ -203,6 +204,14 @@ GenLoop {
 		
 		onsetMeterText = StaticText(win, Rect((winW/5)*4, winH/2+160, 20, 20));
 		onsetMeterText.string = "VU";
+		
+		// FIXME This should account for any number of channels
+		inputPopup = EZPopUpMenu.new(win,Rect((winW/2)-20,(winH/2)-20,40,42), " Input",layout:\vert);
+		inputPopup.addItem('1', {this.setInput(0)});
+		inputPopup.addItem('2', {this.setInput(1)});
+		inputPopup.setColors(Color.grey,Color.white);
+		inputPopup.value=0;
+
 		
 		win.front;
 		win.onClose = {	this.cleanUp };
