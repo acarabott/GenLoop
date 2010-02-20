@@ -55,14 +55,14 @@ GenLoop {
 	var <>timeSig;			//Time Signature
 	
 	*new {|aTempo=60, aTimeSig=4, aBufferTime=30|
-		var newBufferTime = aBufferTime;
+		var bufferMod;
 		
 		//For safety, bufferTime must be a multiple of the time signature
-		while({newBufferTime%aTimeSig!=0}, {
-				newBufferTime = newBufferTime + 1;
-		});
+		if((bufferMod = (aBufferTime%aTimeSig))!=0) {
+			aBufferTime = aBufferTime - bufferMod
+		};
 
-		^super.new.genLoopInit(aTempo, aTimeSig, newBufferTime);
+		^super.new.genLoopInit(aTempo, aTimeSig, aBufferTime);
 	}
 	
 	genLoopInit{|aTempo, aTimeSig, aBufferTime|
