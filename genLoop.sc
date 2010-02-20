@@ -1,3 +1,4 @@
+
 GenLoop {
 
 	var <>s;				//Server
@@ -207,8 +208,9 @@ GenLoop {
 		
 		// FIXME This should account for any number of channels
 		inputPopup = EZPopUpMenu.new(win,Rect((winW/2)-20,(winH/2)-20,40,42), " Input",layout:\vert);
-		inputPopup.addItem('1', {this.setInput(0)});
-		inputPopup.addItem('2', {this.setInput(1)});
+		50.do { |i|
+			inputPopup.addItem((i+1).asSymbol, {this.setInput(i)});
+		};		
 		inputPopup.setColors(Color.grey,Color.white);
 		inputPopup.value=0;
 

@@ -1,5 +1,6 @@
 A generative looper.
 Example instantiation: 
-s.waitForBoot({x = GenLoop.new(120, 4, 40)}); 
+s.waitForBoot({x = GenLoop.new(120, 4, 40)}); 	
+x.tempo 
 Requires SuperCollider 3.3.
 See projectReport.pdf for a full project report.
