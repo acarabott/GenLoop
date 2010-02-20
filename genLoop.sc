@@ -1,6 +1,9 @@
 /*
 	FIXME Mute buttons not working
 	FIXME Generative hits to read frmo channel amp
+	FIXME Auto analyse or nil for un-analysed loops
+	
+	TODO Range settings for automation
 */
 GenLoop {
 
@@ -54,7 +57,9 @@ GenLoop {
 	var <channelRoutines;	//The routines for each channel
 	var <channelProbs;		//The trigger probabilities for each channel
 	var <channelLoopAmps;	//The amplitudes for each channels looping synth
-	var <channelCutAmps;		//The amplitudes for each channels cutting synth
+	var <channelCutAmps;	//The amplitudes for each channels cutting synth
+	var <channelLoopMutes;	//The mute value for each channels looping synth
+	var <channelCutMutes;	//The mute value for each channels cutting synth
 	
 	var <>cropFrame;		//Frame to crop at
 	var <>tempo;			//Tempo
@@ -107,6 +112,8 @@ GenLoop {
 		channelProbs = List[];
 		channelLoopAmps = List[];
 		channelCutAmps = List[];
+		channelLoopMutes = List[];
+		channelCutMutes = List[];
 		
 		beatCounter = 0;
 		totalRecBeats = 0;
@@ -236,26 +243,35 @@ GenLoop {
 	}
 	
 	newGUIChannel {|index|
-	var chan, lvl, mute, amp, prob, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
-		
+	var chan, lvl, mute, loopAmp, cutAmp, prob, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
+
+	
+	
 		{
 			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
 
+
+			loopAmp=EZSlider(guiMixer, Rect(guiMixerNextX+25,0,25,260), "Vol", \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
+			loopAmp.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
+			loopAmp.sliderView.focusColor_(Color.clear); 
+			loopAmp.font_(Font("Helvetica",10));
+
+			loopAmp.action_({|ez| 
+				var val = ez.value.dbamp;
+				channelLoopAmps[index] 	= val;
+				channelCutAmps[index] 	= val; 
+				this.setChannelAmp(index);
+			});
+			guiMixerAmps.add(loopAmp);
+
 			mute=Button(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
 			mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
-
-			amp=EZSlider(guiMixer, Rect(guiMixerNextX+25,0,25,260), "Vol", \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
-			amp.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
-			amp.sliderView.focusColor_(Color.clear); 
-			amp.font_(Font("Helvetica",10));
-
-			amp.action_({|ez| 
-				var val = ez.value.dbamp;
-				channelLoopAmps[index] = val;
-				channelCutAmps[index] = val; 
-				this.setChannelAmp(index, val);
+			mute.action_({|but|
+				switch (but.value)
+					{0}	{channelLoopMutes[index] = 1; this.setChannelAmp(index)}
+					{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
 			});
-			guiMixerAmps.add(amp);
+
 			
 			prob=EZSlider(guiMixer, Rect(guiMixerNextX+50,0,25,260), "Prob", initVal:0.25, unitWidth:25, numberWidth:25,layout:\vert);
 			prob.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
@@ -302,10 +318,10 @@ GenLoop {
 			cutOrLoop.states_([["Looping", Color.black, Color.white],["Cutting", Color.white, Color.black]]);
 			cutOrLoop.action_(
 				Routine { inf.do {
-					"hi".postln;
+/*					"hi".postln;*/
 					this.cutButFunc(index);
 					0.yield;
-					"bye".postln;
+/*					"bye".postln;*/
 					this.loopButFunc(index);
 					0.yield
 				}}
@@ -550,7 +566,7 @@ GenLoop {
 	
 	beatOneOSCAction {
 		this.allHitFuncs(0);
-		0.postln;
+/*		0.postln;*/
 	}
 	
 	crotchetOSCAction {	
@@ -565,19 +581,19 @@ GenLoop {
 		
 		this.allHitFuncs(1);
 		
-		1.postln;
+/*		1.postln;*/
 	}
 	
 	quaverOSCAction {		
 		this.allHitFuncs(2);
 		
-		2.postln;
+/*		2.postln;*/
 	}
 	
 	semiquaverOSCAction {
 		this.allHitFuncs(3);
 		
-		3.postln;
+/*		3.postln;*/
 	}
 	
 	adjustCounters {
@@ -646,9 +662,10 @@ GenLoop {
 		this.newGUIChannel(loopSynths.size-1);
 		nowRecording = true;
 		
-		//Add a default amplitude
-		channelLoopAmps.add(1);
-		channelCutAmps.add(1);
+		//Add a default amplitude and mute value
+		[channelLoopAmps, channelCutAmps, channelLoopMutes, channelCutMutes].do { |item, i|
+			item.add(1)
+		};
 	}
 	
 	stopRecordingAction {
@@ -825,9 +842,9 @@ GenLoop {
 		^rout;
 	}
 	
-	setChannelAmp{|index, val|
+	setChannelAmp{|index|
 		if(cuttingList[index].not) {
-			loopSynths[index].set(\amp, val);
+			loopSynths[index].set(\amp, channelLoopAmps[index] * channelLoopMutes[index]);
 		};
 	}
 	
@@ -837,21 +854,21 @@ GenLoop {
 			mixoscr.remove;
 		});
 		s.makeBundle(0.2, {
-		recSynth.free;
-		metroSynth.free;
-		onsetSynth.free;
-		onSynth.free;
-		recBuf.free;
-		clockBus.free;	
-		recStartBus.free;
-		onsetStartBus.free;
-		analysisClockBus.free;
-		duffAudioBus.free;
-		alwaysOnBus.free;
-		loopSynths.do { |item, i| item.free };
-		loopBufs.do { |item, i| item.free };
-		channelRoutines.do { |item, i| item.stop};
-		guiMixer.close;
+			recSynth.free;
+			metroSynth.free;
+			onsetSynth.free;
+			onSynth.free;
+			recBuf.free;
+			clockBus.free;	
+			recStartBus.free;
+			onsetStartBus.free;
+			analysisClockBus.free;
+			duffAudioBus.free;
+			alwaysOnBus.free;
+			loopSynths.do { |item, i| item.free };
+			loopBufs.do { |item, i| item.free };
+			channelRoutines.do { |item, i| item.stop};
+			guiMixer.close;
 		});
 	}
 }
