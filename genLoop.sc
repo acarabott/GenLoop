@@ -247,8 +247,8 @@ GenLoop {
 	newGUIChannel {|index|
 	var chan, lvl, mute, loopFader, cutFader, probFader, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
 	
-	var faderFunc = {|label, x|
-		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
+	var faderFunc = {|x, label, spec|
+		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, spec, initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
 		fader.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
 		fader.sliderView.focusColor_(Color.clear); 
 		fader.font_(Font("Helvetica",10));
@@ -260,7 +260,7 @@ GenLoop {
 		{
 			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
 
-			loopFader = faderFunc.("Vol", 25);
+			loopFader = faderFunc.(25, "Vol", \db.asSpec.step_(0.01));
 			
 			loopFader.action_({|ez| 
 				channelLoopAmps[index] 	= ez.value.dbamp;
@@ -268,7 +268,7 @@ GenLoop {
 			});
 			guiMixerLoopFaders.add(loopFader);
 			
-			cutFader = faderFunc.("Vol", 50);
+			cutFader = faderFunc.(50, "Vol", \db.asSpec.step_(0.01));
 			cutFader.action_({|ez| 
 				channelCutAmps[index] = ez.value.dbamp; 
 				this.setChannelAmp(index);
@@ -283,7 +283,7 @@ GenLoop {
 					{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
 			});
 
-			probFader = faderFunc.("Prob", 75);
+			probFader = faderFunc.(75, "Prob", ControlSpec.new(0,1,\lin,0.01));
 			probSpecs = [	[0.5, 0.95,\linear, 0.01, 0.95].asSpec, 
 							[0.2, 0.7, \linear, 0.01, 0.5].asSpec,
 							[0.125, 0.8, \linear, 0.01, 0.125].asSpec,
