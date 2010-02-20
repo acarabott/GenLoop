@@ -52,7 +52,8 @@ GenLoop {
 	var <guiMixerRect;		//The mixer GUI's size definitions
 	var <guiMixerNextX;		//The next X value to build a channel at
 	var <guiMixerMeters;	//A collection of meters for channels
-	var <guiMixerAmps;		//The amplitude values of channels
+	var <guiMixerLoopFaders;//The mixer sliders for the channel loop synths
+	var <guiMixerCutFaders;	//The mixer sliders for the channel cut synths
 	var <guiMixerPans;		//The pan values of channels
 	var <channelRoutines;	//The routines for each channel
 	var <channelProbs;		//The trigger probabilities for each channel
@@ -100,7 +101,8 @@ GenLoop {
 		currentLoopIndex = 0;
 		guiMixerHeight = 320;
 		guiMixerMeters = List[];
-		guiMixerAmps = List[];
+		guiMixerLoopFaders = List[];
+		guiMixerCutFaders = List[];
 		guiMixerPans = List[];	
 		channelRoutines = List[];
 				
@@ -243,26 +245,35 @@ GenLoop {
 	}
 	
 	newGUIChannel {|index|
-	var chan, lvl, mute, loopAmp, cutAmp, prob, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
-
+	var chan, lvl, mute, loopFader, cutFader, probFader, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
+	
+	var faderFunc = {|label, x|
+		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
+		fader.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
+		fader.sliderView.focusColor_(Color.clear); 
+		fader.font_(Font("Helvetica",10));
+		
+		fader;
+	};
 	
 	
 		{
 			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
 
-
-			loopAmp=EZSlider(guiMixer, Rect(guiMixerNextX+25,0,25,260), "Vol", \db.asSpec.step_(0.01), initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
-			loopAmp.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
-			loopAmp.sliderView.focusColor_(Color.clear); 
-			loopAmp.font_(Font("Helvetica",10));
-
-			loopAmp.action_({|ez| 
-				var val = ez.value.dbamp;
-				channelLoopAmps[index] 	= val;
-				channelCutAmps[index] 	= val; 
+			loopFader = faderFunc.("Vol", 25);
+			
+			loopFader.action_({|ez| 
+				channelLoopAmps[index] 	= ez.value.dbamp;
 				this.setChannelAmp(index);
 			});
-			guiMixerAmps.add(loopAmp);
+			guiMixerLoopFaders.add(loopFader);
+			
+			cutFader = faderFunc.("Vol", 50);
+			cutFader.action_({|ez| 
+				channelCutAmps[index] = ez.value.dbamp; 
+				this.setChannelAmp(index);
+			});
+			guiMixerCutFaders.add(cutFader);
 
 			mute=Button(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
 			mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
@@ -272,21 +283,17 @@ GenLoop {
 					{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
 			});
 
-			
-			prob=EZSlider(guiMixer, Rect(guiMixerNextX+50,0,25,260), "Prob", initVal:0.25, unitWidth:25, numberWidth:25,layout:\vert);
-			prob.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
-			prob.sliderView.focusColor_(Color.clear); 
-			prob.font_(Font("Helvetica",10));
+			probFader = faderFunc.("Prob", 75);
 			probSpecs = [	[0.5, 0.95,\linear, 0.01, 0.95].asSpec, 
 							[0.2, 0.7, \linear, 0.01, 0.5].asSpec,
 							[0.125, 0.8, \linear, 0.01, 0.125].asSpec,
 							[0.0625, 0.7, \linear, 0.01, 0.0625].asSpec];
 
-			prob.action_({|ez| 
+			probFader.action_({|ez| 
 				probSpecs.size.do { |i|	channelProbs[index][i]= probSpecs[i].map(ez.value)};
 			});
 			
-			pan = Slider(guiMixer, Rect(guiMixerNextX,260,75,20));
+			pan = Slider(guiMixer, Rect(guiMixerNextX,260,100,20));
 			pan.value_(0.5);
 			panSpec = ControlSpec(-1,1,\linear,0.01);
 			panVal = StaticText(guiMixer, Rect(guiMixerNextX+35,280,35,20));
@@ -833,7 +840,8 @@ GenLoop {
 				panVal = rrand(-1.0, 1.0);
 				{
 					loopSynths[index].set(\ampLag, waitTime, \panLag, waitTime);
-					guiMixerAmps[index].valueAction_(ampVal);
+					guiMixerLoopFaders[index].valueAction_(ampVal);
+					guiMixerCutFaders[index].valueAction_(ampVal);
 					guiMixerPans[index].valueAction_(panVal);
 				}.defer;
 				waitTime.wait;
