@@ -296,7 +296,6 @@ GenLoop {
 
 			probFader.action_({|ez| 
 				probSpecs.size.do { |i|	channelProbs[index][i] = probSpecs[i].map(ez.value)};
-				"channelProbs: ".post; (channelProbs).postln;
 			});
 			
 			loopMute 	= muteButFunc.(0, channelLoopMutes);
@@ -746,7 +745,7 @@ GenLoop {
 		//set analysis synth buffer to duffBuf
 		this.stopOnsetSynth;
 		//Turn up loop volume
-		loopSynths[index].set(\amp, channelLoopAmps[index]);
+/*		this.setChannelAmp(index);*/
 		//Turn off cutting
 		cuttingList[index] = false;
 		
@@ -757,7 +756,7 @@ GenLoop {
 		//set analysis synth buffer to duffBuf
 		this.stopOnsetSynth;
 		//Turn down loop volume
-		loopSynths[index].set(\amp, 0);
+/*		this.setChannelAmp(index);*/
 		//Activate cutting
 		cuttingList[index] = true;
 	}
@@ -829,7 +828,7 @@ GenLoop {
 		};
 	}
 	
-	setChannelAutomation{|index|
+	setChannelAutomation {|index|
 		var rout = Routine {
 			var waitTime, ampVal, panVal;
 			inf.do {
@@ -848,10 +847,8 @@ GenLoop {
 		^rout;
 	}
 	
-	setChannelAmp{|index|
-		if(cuttingList[index].not) {
-			loopSynths[index].set(\amp, channelLoopAmps[index] * channelLoopMutes[index]);
-		};
+	setChannelAmp {|index|
+		loopSynths[index].set(\amp, channelLoopAmps[index] * channelLoopMutes[index]);
 	}
 	
 	cleanUp {
