@@ -1,5 +1,5 @@
 /*
-	FIXME Mute buttons not working
+	FIXME Mute buttons not working when switching from loop to cut. Add individual mutes
 	FIXME Generative hits to read frmo channel amp
 	FIXME Auto analyse or nil for un-analysed loops
 	
@@ -247,8 +247,8 @@ GenLoop {
 	newGUIChannel {|index|
 	var chan, lvl, mute, loopFader, cutFader, probFader, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
 	
-	var faderFunc = {|x, label, spec|
-		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, spec, initVal:1, unitWidth:25, numberWidth:25,layout:\vert);
+	var faderFunc = {|x, label, spec, initVal=1|
+		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, spec, initVal:initVal, unitWidth:25, numberWidth:25,layout:\vert);
 		fader.setColors(Color.grey,Color.white, Color.grey(0.7),Color.grey, Color.white, Color.yellow,nil,nil, Color.grey(0.7));
 		fader.sliderView.focusColor_(Color.clear); 
 		fader.font_(Font("Helvetica",10));
@@ -283,14 +283,17 @@ GenLoop {
 					{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
 			});
 
-			probFader = faderFunc.(75, "Prob", ControlSpec.new(0,1,\lin,0.01));
-			probSpecs = [	[0.5, 0.95,\linear, 0.01, 0.95].asSpec, 
-							[0.2, 0.7, \linear, 0.01, 0.5].asSpec,
-							[0.125, 0.8, \linear, 0.01, 0.125].asSpec,
-							[0.0625, 0.7, \linear, 0.01, 0.0625].asSpec];
+			probFader = faderFunc.(75, "Prob", ControlSpec.new(0,1,\lin,0.01), 0.25);
+			probSpecs = [
+				[0.5, 		0.95,	\linear, 0.01, 0.95		].asSpec, 
+				[0.2, 		0.7, 	\linear, 0.01, 0.5		].asSpec,
+				[0.125, 	0.8, 	\linear, 0.01, 0.125	].asSpec,
+				[0.0625, 	0.7, 	\linear, 0.01, 0.0625	].asSpec
+			];
 
 			probFader.action_({|ez| 
-				probSpecs.size.do { |i|	channelProbs[index][i]= probSpecs[i].map(ez.value)};
+				probSpecs.size.do { |i|	channelProbs[index][i] = probSpecs[i].map(ez.value)};
+				"channelProbs: ".post; (channelProbs).postln;
 			});
 			
 			pan = Slider(guiMixer, Rect(guiMixerNextX,260,100,20));
@@ -308,7 +311,7 @@ GenLoop {
 			guiMixerPans.add(pan);
 
 			channelRoutines.add(this.setChannelAutomation(index));
-			automate = Button(guiMixer, Rect(guiMixerNextX, 280, 75, 20));
+			automate = Button(guiMixer, Rect(guiMixerNextX, 280, 100, 20));
 			automate.states_([["Manual", Color.white, Color.grey],["Automated", Color.white, Color.red]]);
 			
 			automate.action_(
@@ -321,7 +324,7 @@ GenLoop {
 				}}
 			);
 
-			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 300, 75, 20));
+			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 300, 100, 20));
 			cutOrLoop.states_([["Looping", Color.black, Color.white],["Cutting", Color.white, Color.black]]);
 			cutOrLoop.action_(
 				Routine { inf.do {
@@ -333,10 +336,10 @@ GenLoop {
 					0.yield
 				}}
 			);
-						
-			guiMixerNextX = guiMixerNextX + 100;
+				
+			guiMixerNextX = guiMixerNextX + 125;
 			guiMixerRect = guiMixer.bounds;
-			guiMixerRect.width_(guiMixerRect.width+100);
+			guiMixerRect.width_(guiMixerRect.width+125);
 			guiMixer.bounds = guiMixerRect;
 		}.defer;
 	}
@@ -573,7 +576,6 @@ GenLoop {
 	
 	beatOneOSCAction {
 		this.allHitFuncs(0);
-/*		0.postln;*/
 	}
 	
 	crotchetOSCAction {	
@@ -588,19 +590,14 @@ GenLoop {
 		
 		this.allHitFuncs(1);
 		
-/*		1.postln;*/
 	}
 	
 	quaverOSCAction {		
 		this.allHitFuncs(2);
-		
-/*		2.postln;*/
 	}
 	
 	semiquaverOSCAction {
 		this.allHitFuncs(3);
-		
-/*		3.postln;*/
 	}
 	
 	adjustCounters {
@@ -794,7 +791,6 @@ GenLoop {
 	}
 	
 	hitFunc {|bufnum, startFrame, endFrame, rate=1, amp|
-		
 		s.makeBundle(nil, {			
 			Synth(\GCHit, [\bufnum, bufnum, \startFrame, startFrame, \endFrame, endFrame, \rate, rate, \amp, amp]);							
 		});
@@ -806,7 +802,6 @@ GenLoop {
 		var rate;
 		
 		if(chance.coin) {
-			
 			hit = hitList.size.rand;
 			startFrame = hitList[hit];
 			
@@ -826,7 +821,7 @@ GenLoop {
 	allHitFuncs {|index|
 		cuttingList.size.do { |i|
 			if(cuttingList[i]) {
-				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i], channelCutAmps[index])
+				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i], channelCutAmps[i]/**channelCutMutes[index]*/)
 			};
 		};
 	}
