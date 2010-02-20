@@ -1,11 +1,13 @@
 /*
-	FIXME Mute buttons not working when switching from loop to cut. Add individual mutes
-	FIXME Generative hits to read frmo channel amp
+	TODO Solo buttons
+	TODO Whole channel solo/mute buttons
+	
 	FIXME Auto analyse or nil for un-analysed loops
 	
 	TODO Range settings for automation
 	TODO Stop windows from being resizable. Not mixer?
 	TODO Alt click reset faders...
+	TODO Freedom mode, no quantisation
 */
 GenLoop {
 
@@ -41,8 +43,7 @@ GenLoop {
 	var <totalLoopBeats;	//Total beats used for a loop;
 	
 	var <nowRecording;		//Boolean, whether or recording is taking place
-	var <doneCropping;	
-	var <reallyCropping;
+	var <doneCropping;		//Boolean, whether cropping has finished or not
 	var <nowAnalysing;		//Boolean, whether or not onset frame collection is taking place
 	var <cuttingList;		//List of whether a layer should be looping or cutting
 		
@@ -101,7 +102,7 @@ GenLoop {
 		onsetFrames = List[];
 		onsetsList = List[];
 		currentLoopIndex = 0;
-		guiMixerHeight = 340;
+		guiMixerHeight = 400;
 		guiMixerMeters = List[];
 		guiMixerLoopFaders = List[];
 		guiMixerCutFaders = List[];
@@ -110,7 +111,6 @@ GenLoop {
 				
 		nowRecording = false;
 		doneCropping = false;
-		reallyCropping = false;
 		nowAnalysing = false;
 		cuttingList = List[];
 		channelProbs = List[];
@@ -301,19 +301,19 @@ GenLoop {
 			loopMute 	= muteButFunc.(0, channelLoopMutes);
 			cutMute 	= muteButFunc.(25, channelCutMutes);
 			
-			pan = Slider(guiMixer, Rect(guiMixerNextX+25,280,75,20));
+			pan = Slider(guiMixer, Rect(guiMixerNextX+25,340,75,20));
 			pan.value_(0.5);
 			panSpec = ControlSpec(-1,1,\linear,0.01);
 			pan.action_({
 				loopSynths[index].set(\pan, panSpec.map(pan.value))
 			});
-			panText = StaticText(guiMixer, Rect(guiMixerNextX,280, 25,20));
+			panText = StaticText(guiMixer, Rect(guiMixerNextX,340, 25,20));
 			panText.string = "Pan: ";
 			panText.font_(Font("Helvetica",10));
 			guiMixerPans.add(pan);
 
 			channelRoutines.add(this.setChannelAutomation(index));
-			automate = Button(guiMixer, Rect(guiMixerNextX, 300, 100, 20));
+			automate = Button(guiMixer, Rect(guiMixerNextX, 360, 100, 20));
 			automate.states_([["Manual", Color.white, Color.grey],["Automated", Color.white, Color.red]]);
 			
 			automate.action_(
@@ -326,7 +326,7 @@ GenLoop {
 				}}
 			);
 
-			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 320, 100, 20));
+			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 380, 100, 20));
 			cutOrLoop.states_([["Looping", Color.black, Color.white],["Cutting", Color.white, Color.black]]);
 			cutOrLoop.action_(
 				Routine { inf.do {
