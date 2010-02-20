@@ -338,7 +338,7 @@ GenLoop {
 		}.send(s);
 		
 		//Recording SynthDef
-		SynthDef(\GCRec) { |sigIn=1, clockIn, bufnum, trigger, stopRec=0, oneBeat|
+		SynthDef(\GCRec) { |sigIn=0, out=0, clockIn, bufnum, trigger, stopRec=0, oneBeat|
 			var inSig;
 			var clock;
 			var phase;
@@ -369,7 +369,7 @@ GenLoop {
 			// measure rms and Peak
 			SendReply.kr(imp, '/tr', [Amplitude.kr(inSig), K2A.ar(Peak.ar(inSig, delimp).lag(0, 3))], 0);
 		
-			Out.ar(0, inSig*env)
+			Out.ar(out, inSig*env)
 		}.send(s);
 		
 		//Loop and Onset detection SynthDef
@@ -465,6 +465,10 @@ GenLoop {
 			onSynth = Synth(\onBus, [\outBus, alwaysOnBus]);
 			
 		});
+	}
+	
+	setInput {|newVal|
+		recSynth.set(\sigIn, newVal);
 	}
 	
 	//Method to setup OSCResponder.
@@ -726,10 +730,7 @@ GenLoop {
 			loopSynths[currentLoopIndex].set(\clockOut, duffAudioBus);
 		});
 	}
-	
-	simpleLoopAction {
-	}
-		
+			
 	plotRecBuf {
 		recBuf.plot;
 	}
