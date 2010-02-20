@@ -1,3 +1,7 @@
+/*
+	FIXME Mute buttons not working
+	FIXME Generative hits to read frmo channel amp
+*/
 GenLoop {
 
 	var <>s;				//Server
