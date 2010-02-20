@@ -4,6 +4,8 @@
 	FIXME Auto analyse or nil for un-analysed loops
 	
 	TODO Range settings for automation
+	TODO Stop windows from being resizable. Not mixer?
+	TODO Alt click reset faders...
 */
 GenLoop {
 
@@ -99,7 +101,7 @@ GenLoop {
 		onsetFrames = List[];
 		onsetsList = List[];
 		currentLoopIndex = 0;
-		guiMixerHeight = 320;
+		guiMixerHeight = 340;
 		guiMixerMeters = List[];
 		guiMixerLoopFaders = List[];
 		guiMixerCutFaders = List[];
@@ -245,7 +247,7 @@ GenLoop {
 	}
 	
 	newGUIChannel {|index|
-	var chan, lvl, mute, loopFader, cutFader, probFader, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
+	var chan, lvl, loopMute, cutMute, loopFader, cutFader, probFader, probSpecs, pan, panSpec, panVal, panText, automate, cutOrLoop;
 	
 	var faderFunc = {|x, label, spec, initVal=1|
 		var fader=EZSlider(guiMixer, Rect(guiMixerNextX+x,0,25,260), label, spec, initVal:initVal, unitWidth:25, numberWidth:25,layout:\vert);
@@ -256,11 +258,24 @@ GenLoop {
 		fader;
 	};
 	
+	var muteButFunc = {|x, array|
+		var mute=Button(guiMixer, Rect(guiMixerNextX+25+x, 260, 25, 20));
+		mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
+		mute.action_({|but|
+			array[index] = ((but.value-1).abs);
+			this.setChannelAmp(index);
+/*			switch (but.value)
+				{0}	{channelLoopMutes[index] = 1; this.setChannelAmp(index)}
+				{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
+*/		
+		});
+		
+	};
 	
 		{
 			guiMixerMeters.add(SCLevelIndicator(guiMixer, Rect(guiMixerNextX,0,25,240)));
 
-			loopFader = faderFunc.(25, "Vol", \db.asSpec.step_(0.01));
+			loopFader = faderFunc.(25, "Loop", \db.asSpec.step_(0.01));
 			
 			loopFader.action_({|ez| 
 				channelLoopAmps[index] 	= ez.value.dbamp;
@@ -268,21 +283,13 @@ GenLoop {
 			});
 			guiMixerLoopFaders.add(loopFader);
 			
-			cutFader = faderFunc.(50, "Vol", \db.asSpec.step_(0.01));
+			cutFader = faderFunc.(50, "Cuts", \db.asSpec.step_(0.01));
 			cutFader.action_({|ez| 
 				channelCutAmps[index] = ez.value.dbamp; 
 				this.setChannelAmp(index);
 			});
 			guiMixerCutFaders.add(cutFader);
-
-			mute=Button(guiMixer, Rect(guiMixerNextX, 240, 20, 20));
-			mute.states_([["M", Color.white, Color.grey],["M", Color.white, Color.blue]]);
-			mute.action_({|but|
-				switch (but.value)
-					{0}	{channelLoopMutes[index] = 1; this.setChannelAmp(index)}
-					{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
-			});
-
+			
 			probFader = faderFunc.(75, "Prob", ControlSpec.new(0,1,\lin,0.01), 0.25);
 			probSpecs = [
 				[0.5, 		0.95,	\linear, 0.01, 0.95		].asSpec, 
@@ -296,22 +303,22 @@ GenLoop {
 				"channelProbs: ".post; (channelProbs).postln;
 			});
 			
-			pan = Slider(guiMixer, Rect(guiMixerNextX,260,100,20));
+			loopMute 	= muteButFunc.(0, channelLoopMutes);
+			cutMute 	= muteButFunc.(25, channelCutMutes);
+			
+			pan = Slider(guiMixer, Rect(guiMixerNextX+25,280,75,20));
 			pan.value_(0.5);
 			panSpec = ControlSpec(-1,1,\linear,0.01);
-			panVal = StaticText(guiMixer, Rect(guiMixerNextX+35,280,35,20));
-			panVal.font_(Font("Helvetica",10));
 			pan.action_({
-				panVal.string_(panSpec.map(pan.value).asString);
 				loopSynths[index].set(\pan, panSpec.map(pan.value))
 			});
-			panText = StaticText(guiMixer, Rect(guiMixerNextX,280, 35,20));
+			panText = StaticText(guiMixer, Rect(guiMixerNextX,280, 25,20));
 			panText.string = "Pan: ";
 			panText.font_(Font("Helvetica",10));
 			guiMixerPans.add(pan);
 
 			channelRoutines.add(this.setChannelAutomation(index));
-			automate = Button(guiMixer, Rect(guiMixerNextX, 280, 100, 20));
+			automate = Button(guiMixer, Rect(guiMixerNextX, 300, 100, 20));
 			automate.states_([["Manual", Color.white, Color.grey],["Automated", Color.white, Color.red]]);
 			
 			automate.action_(
@@ -324,7 +331,7 @@ GenLoop {
 				}}
 			);
 
-			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 300, 100, 20));
+			cutOrLoop = Button(guiMixer, Rect(guiMixerNextX, 320, 100, 20));
 			cutOrLoop.states_([["Looping", Color.black, Color.white],["Cutting", Color.white, Color.black]]);
 			cutOrLoop.action_(
 				Routine { inf.do {
@@ -821,7 +828,7 @@ GenLoop {
 	allHitFuncs {|index|
 		cuttingList.size.do { |i|
 			if(cuttingList[i]) {
-				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i], channelCutAmps[i]/**channelCutMutes[index]*/)
+				this.randomHitFunc(channelProbs[i][index], loopBufs[i], onsetsList[i], channelCutAmps[i]*channelCutMutes[i])
 			};
 		};
 	}
