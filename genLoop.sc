@@ -264,10 +264,6 @@ GenLoop {
 		mute.action_({|but|
 			array[index] = ((but.value-1).abs);
 			this.setChannelAmp(index);
-/*			switch (but.value)
-				{0}	{channelLoopMutes[index] = 1; this.setChannelAmp(index)}
-				{1}	{channelLoopMutes[index] = 0; this.setChannelAmp(index)}
-*/		
 		});
 		
 	};
